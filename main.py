@@ -3,15 +3,28 @@
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 import pathlib
 import tkinter
+from tkinter.messagebox import showinfo
+
 from rembg import remove
 from tkinter import filedialog as fd
 import customtkinter
 from PIL import Image, ImageTk
 
 
-def erase_file():
-    print('Erase')
-
+def erase_bg():
+    if len(textbox_file.get("0.0", "end-1c")) == 0 or len(textbox_path.get("0.0", "end-1c")) == 0:
+        showinfo(title="Fail", message="Choose Image and Folder!")
+        print('Empty')
+    else:
+        input_file = pathlib.Path(textbox_file.get("1.0", 'end-1c'))
+        input_folder = pathlib.Path(textbox_path.get("1.0", 'end-1c'))
+        file_name = input_file.stem
+        output_file = f'{input_folder}/{file_name}_MagicPNG.png'
+        print(output_file)
+        input_img = Image.open(input_file)
+        output_img = remove(input_img)
+        output_img.save(output_file)
+        showinfo(title="", message="Done")
 
 def select_file():
     filetypes = (
@@ -54,27 +67,27 @@ if __name__ == '__main__':
     # print(pathImg)
     # img = PhotoImage(file=pathImg)
     img = customtkinter.CTkImage(Image.open(pathImg))
-    openBtn_file = customtkinter.CTkButton(master=frame, text='', image=img, width=15, height=15, command=select_file)
+    openBtn_file = customtkinter.CTkButton(master=frame, text='', image=img, width=20, height=20, command=select_file)
     openBtn_file.place(x=540, y=100)
 
     # openBtn.grid(row=1, column=1)
-    textbox_file = customtkinter.CTkTextbox(master=frame, width=500, height=15, state='disable')
+    textbox_file = customtkinter.CTkTextbox(master=frame, width=500, height=20, state='disable')
     textbox_file.place(x=30, y=100)
     # textbox.grid(row=1, column=0, padx=5, pady=60)
     # openBtn.grid(row=1, column=1, pady=0)
 
-    l3 = customtkinter.CTkLabel(master=frame, text="Direction to export Path", font=('Century Gothic', 25))
+    l3 = customtkinter.CTkLabel(master=frame, text="Direction to export Folder", font=('Century Gothic', 25))
     l3.place(x=200, y=200)
 
-    textbox_path = customtkinter.CTkTextbox(master=frame, width=500, height=15, state='disable')
+    textbox_path = customtkinter.CTkTextbox(master=frame, width=500, height=20, state='disable')
     textbox_path.place(x=30, y=250)
 
-    openBtn_path = customtkinter.CTkButton(master=frame, text='', image=img, width=15, height=15, command=select_path)
+    openBtn_path = customtkinter.CTkButton(master=frame, text='', image=img, width=20, height=20, command=select_path)
     openBtn_path.place(x=540, y=250)
 
     # textbox.grid(row=1, column=0)
 
-    eraseBtn = customtkinter.CTkButton(master=frame, text='Erase', width=150, height=50, font=('Century Gothic', 25), command=erase_file)
+    eraseBtn = customtkinter.CTkButton(master=frame, text='Erase', width=150, height=50, font=('Century Gothic', 25), command=erase_bg)
     eraseBtn.place(x=250, y=320)
     # openBtn.grid()
     window.resizable(False, False)
