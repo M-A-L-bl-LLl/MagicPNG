@@ -1,27 +1,82 @@
 # This is a sample Python scrip
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-from tkinter import *
+import pathlib
+import tkinter
+from rembg import remove
 from tkinter import filedialog as fd
+import customtkinter
+from PIL import Image, ImageTk
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+def erase_file():
+    print('Erase')
 
 
-def callback():
-    name = fd.askopenfilename()
-    print(name)
+def select_file():
+    filetypes = (
+        ('JPG', '*.jpg'),
+        ('PNG', '*.png')
+    )
+    name = fd.askopenfilename(filetypes=filetypes)
+    textbox_file.configure(state='normal')
+    textbox_file.insert("0.0", name)
+    textbox_file.configure(state='disable')
+
+
+def select_path():
+    selected_user_path = fd.askdirectory()
+    textbox_path.configure(state='normal')
+    textbox_path.insert("0.0", selected_user_path)
+    textbox_path.configure(state='disable')
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    window = Tk()
-    window.geometry('600x400')
+    customtkinter.set_appearance_mode("dark")
+    customtkinter.set_default_color_theme("dark-blue")
+    window = customtkinter.CTk()
+    window.geometry('800x600')
     window.title("MagicPNG")
-    openBtn = Button(window, text='Click to Open File', command=callback).pack(pady=10)
-    #openBtn.grid()
+    dir_path = pathlib.Path.cwd()
+    pathBg = pathlib.Path(dir_path, 'Icons', 'bg.png')
+    bg = ImageTk.PhotoImage(Image.open(pathBg))
+    l1 = customtkinter.CTkLabel(master=window, image=bg)
+    l1.pack()
+
+    frame = customtkinter.CTkFrame(master=l1, width=600, height=400, corner_radius=0)
+    frame.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+
+    l2 = customtkinter.CTkLabel(master=frame, text="Direction to your Image", font=('Century Gothic', 25))
+    l2.place(x=200, y=45)
+
+    pathImg = pathlib.Path(dir_path, 'Icons', 'folder.png')
+    # print(pathImg)
+    # img = PhotoImage(file=pathImg)
+    img = customtkinter.CTkImage(Image.open(pathImg))
+    openBtn_file = customtkinter.CTkButton(master=frame, text='', image=img, width=15, height=15, command=select_file)
+    openBtn_file.place(x=540, y=100)
+
+    # openBtn.grid(row=1, column=1)
+    textbox_file = customtkinter.CTkTextbox(master=frame, width=500, height=15, state='disable')
+    textbox_file.place(x=30, y=100)
+    # textbox.grid(row=1, column=0, padx=5, pady=60)
+    # openBtn.grid(row=1, column=1, pady=0)
+
+    l3 = customtkinter.CTkLabel(master=frame, text="Direction to export Path", font=('Century Gothic', 25))
+    l3.place(x=200, y=200)
+
+    textbox_path = customtkinter.CTkTextbox(master=frame, width=500, height=15, state='disable')
+    textbox_path.place(x=30, y=250)
+
+    openBtn_path = customtkinter.CTkButton(master=frame, text='', image=img, width=15, height=15, command=select_path)
+    openBtn_path.place(x=540, y=250)
+
+    # textbox.grid(row=1, column=0)
+
+    eraseBtn = customtkinter.CTkButton(master=frame, text='Erase', width=150, height=50, font=('Century Gothic', 25), command=erase_file)
+    eraseBtn.place(x=250, y=320)
+    # openBtn.grid()
     window.resizable(False, False)
     window.mainloop()
 
