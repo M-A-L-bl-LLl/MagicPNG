@@ -136,3 +136,5 @@ TODO.md
 .idea/MagicPNG.iml
 /.idea
 CLAUDE.md
+.claude/settings.local.json
+.idea/MagicPNG.iml

@@ -1,3 +1,4 @@
+import ctypes
 import json
 import pathlib
 import subprocess
@@ -5,11 +6,13 @@ import threading
 import tkinter
 from tkinter.messagebox import showinfo
 
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('MagicPNG.App')
+
 import re
 from tkinterdnd2 import TkinterDnD, DND_FILES
 from tkinter import filedialog as fd
 import customtkinter
-from PIL import Image
+from PIL import Image, ImageTk
 
 VALID_SUFFIXES = {'.jpg', '.jpeg', '.png'}
 
@@ -45,22 +48,25 @@ def save_config(key, value):
 
 
 def process_batch(files, output_folder, model_name, fmt, app):
-    app.after(0, lambda: app.eraseBtn.configure(text='Loading...'))
-    from rembg import remove, new_session
-    model_file = pathlib.Path.home() / '.u2net' / f'{model_name}.onnx'
-    if not model_file.exists():
-        app.after(0, lambda: app.eraseBtn.configure(text='Downloading model...'))
-    session = new_session(model_name)
-    ext = '.webp' if fmt == 'WebP' else '.png'
-    total = len(files)
-    last_input = last_output = None
-    for i, input_file in enumerate(files, 1):
-        app.after(0, lambda i=i: app.eraseBtn.configure(text=f'Processing {i}/{total}...'))
-        output_file = pathlib.Path(output_folder) / f'{input_file.stem}_MagicPNG{ext}'
-        output_img = remove(Image.open(input_file), session=session)
-        output_img.save(output_file)
-        last_input, last_output = input_file, output_file
-    app.after(0, lambda: app.on_done(last_input, last_output, total))
+    try:
+        app.after(0, lambda: app.eraseBtn.configure(text='Loading...'))
+        from rembg import remove, new_session
+        model_file = pathlib.Path.home() / '.u2net' / f'{model_name}.onnx'
+        if not model_file.exists():
+            app.after(0, lambda: app.eraseBtn.configure(text='Downloading model...'))
+        session = new_session(model_name)
+        ext = '.webp' if fmt == 'WebP' else '.png'
+        total = len(files)
+        last_input = last_output = None
+        for i, input_file in enumerate(files, 1):
+            app.after(0, lambda i=i: app.eraseBtn.configure(text=f'Processing {i}/{total}...'))
+            output_file = pathlib.Path(output_folder) / f'{input_file.stem}_MagicPNG{ext}'
+            output_img = remove(Image.open(input_file), session=session)
+            output_img.save(output_file)
+            last_input, last_output = input_file, output_file
+        app.after(0, lambda: app.on_done(last_input, last_output, total))
+    except Exception as e:
+        app.after(0, lambda e=e: app.on_error(str(e)))
 
 
 class App(customtkinter.CTk, TkinterDnD.Tk):
@@ -77,7 +83,11 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
         self.geometry('800x600')
         self.title("MagicPNG")
         self.resizable(False, False)
-        self.iconbitmap(self.dir_path / 'Icons' / 'MagicPngAppIcon_MagicPNG.ico')
+        ico_path = self.dir_path / 'Icons' / 'MagicPngAppIcon_MagicPNG.ico'
+        self.iconbitmap(ico_path)
+        icon_img = Image.open(ico_path).resize((256, 256), Image.LANCZOS)
+        self._app_icon = ImageTk.PhotoImage(icon_img)
+        self.iconphoto(True, self._app_icon)
 
         self._build_ui()
 
@@ -87,7 +97,7 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
         l1 = customtkinter.CTkLabel(master=self, image=bg, text="")
         l1.pack()
 
-        frame = customtkinter.CTkFrame(master=l1, width=600, height=400, corner_radius=0)
+        frame = customtkinter.CTkFrame(master=l1, width=600, height=430, corner_radius=0)
         frame.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
 
         customtkinter.CTkLabel(master=frame, text="Direction to your Image", font=('Century Gothic', 25)).place(x=200, y=45)
@@ -123,7 +133,7 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
         self.format_btn.place(x=115, y=287)
 
         self.eraseBtn = customtkinter.CTkButton(master=frame, text='Erase', width=150, height=50, font=('Century Gothic', 25), command=self.erase_bg)
-        self.eraseBtn.place(x=250, y=335)
+        self.eraseBtn.place(x=225, y=342)
 
         self.openFolderBtn = customtkinter.CTkButton(master=frame, text='📂 Open Folder', width=150, height=50, font=('Century Gothic', 18))
 
@@ -177,7 +187,7 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
         model_name = MODELS[self.model_menu.get()]
         fmt = self.format_btn.get()
         self.eraseBtn.configure(state='disabled', text='Processing...')
-        self.progressbar.place(x=150, y=395)
+        self.progressbar.place(x=150, y=405)
         self.progressbar.start()
         threading.Thread(
             target=process_batch,
@@ -185,13 +195,21 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
             daemon=True
         ).start()
 
+    def on_error(self, message):
+        self.progressbar.stop()
+        self.progressbar.place_forget()
+        self.eraseBtn.configure(state='normal', text='Erase')
+        self.eraseBtn.place(x=225, y=342)
+        showinfo("Error", f"Something went wrong:\n{message}")
+
     def on_done(self, last_input, last_output, total):
         self.progressbar.stop()
         self.progressbar.place_forget()
         self.eraseBtn.configure(state='normal', text='Erase')
         output_folder = last_output.parent
         self.openFolderBtn.configure(state='normal', command=lambda: subprocess.Popen(f'explorer "{output_folder}"'))
-        self.openFolderBtn.place(x=420, y=342)
+        self.eraseBtn.place(x=110, y=342)
+        self.openFolderBtn.place(x=340, y=342)
         title = "Preview" if total == 1 else f"Preview — last of {total} processed"
         self.show_preview(last_input, last_output, title)
 
@@ -201,6 +219,7 @@ class App(customtkinter.CTk, TkinterDnD.Tk):
         preview.title(title)
         preview.resizable(False, False)
         preview.attributes('-topmost', True)
+        preview.after(200, lambda: (preview.iconbitmap(self.dir_path / 'Icons' / 'MagicPngAppIcon_MagicPNG.ico'), preview.iconphoto(False, self._app_icon)))
         preview.after(300, lambda: preview.attributes('-topmost', False))
 
         original = Image.open(input_file).convert("RGBA")
