@@ -14,11 +14,17 @@
   <img src="https://img.shields.io/badge/python-3.12-yellow" />
 </p>
 
+<p align="center">
+  <a href="https://github.com/M-A-L-bl-LLl/MagicPNG/releases/latest/download/MagicPNG_Setup.exe">
+    <img src="https://img.shields.io/badge/⬇️ Download-MagicPNG_Setup.exe-brightgreen?style=for-the-badge" alt="Download"/>
+  </a>
+</p>
+
 ---
 
 <br>
 
-# 🇬🇧 English
+# <img src="https://flagcdn.com/w40/gb.png" height="20"/> English
 
 ---
 
@@ -86,7 +92,7 @@ python -m PyInstaller MagicPNG.spec -y
 
 <br>
 
-# 🇷🇺 Русский
+# <img src="https://flagcdn.com/w40/ru.png" height="20"/> Русский
 
 ---
 
